@@ -5,7 +5,6 @@ const ProduitSchema = new mongoose.Schema({
   description: String,
   prix: { type: Number, required: true },
   stock: { type: Number, default: 0 },
-  necessiteOrdonnance: { type: Boolean, default: false },
   categorieId: { type: mongoose.Schema.Types.ObjectId, ref: "Categorie" },
 }, { timestamps: true });
 

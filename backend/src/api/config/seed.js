@@ -10,7 +10,6 @@ import Produit from "../models/Produit.model.js";
 import Panier from "../models/Panier.model.js";
 import LignePanier from "../models/LignePanier.model.js";
 import Commande from "../models/Commande.model.js";
-import Paiement from "../models/Paiement.model.js";
 
 const runSeed = async () => {
   try {
@@ -23,7 +22,6 @@ const runSeed = async () => {
     await Panier.createCollection();
     await LignePanier.createCollection();
     await Commande.createCollection();
-    await Paiement.createCollection();
 
     console.log("Toutes les collections ont été créées.");
   } catch (err) {
