@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-export const LignePanierSchema = new mongoose.Schema(
+export const LigneCommandeSchema = new mongoose.Schema(
   {
     produitId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -8,14 +8,11 @@ export const LignePanierSchema = new mongoose.Schema(
       required: true,
     },
     nomProduit: { type: String, required: true },
-    prixUnitaire: { type: Number, required: true },
+    prixUnitaire: { type: Number, required: true, min: 0 },
     quantite: { type: Number, required: true, min: 1 },
   },
   {
-    _id: false, 
+    _id: false,
     timestamps: false,
   }
 );
-
-const LignePanier = mongoose.model("LignePanier", LignePanierSchema);
-export default LignePanier;

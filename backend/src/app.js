@@ -8,8 +8,8 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.use('/produits', produitRoutes);
-app.use('/categories', categorieRoutes);
-app.use('/commandes', commandeRoutes);
+app.use('/produit', produitRoutes);
+app.use('/categorie', categorieRoutes);
+app.use('/commande', commandeRoutes);
 
 export default app;
