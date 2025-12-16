@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import app from './app.js';
-import connecterDB from './api/config/db.js';
+import connecterDB from './config/db.js';
 
 // Connecter la base de données
 connecterDB();

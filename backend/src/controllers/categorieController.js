@@ -1,6 +1,6 @@
 
 const categorieController = {
-  // GET /api/categories
+  // GET /categories
   getCategories: async (req, res) => {
     try {
       const categories = await categorieService.getListecategories();
@@ -10,7 +10,7 @@ const categorieController = {
     }
   },
 
-  // GET /api/categories/:id
+  // GET /categories/:id
   getCategorieById: async (req, res) => {
     try {
       const categorie = await categorieService.getcategorieById(req.params.id);
@@ -23,7 +23,7 @@ const categorieController = {
     }
   },
 
-  // POST /api/categories
+  // POST /categories
   createCategorie: async (req, res) => {
     try {
       const nouveaucategorie = await categorieService.createcategorie(req.body);
@@ -33,7 +33,7 @@ const categorieController = {
     }
   },
 
-  // PUT /api/categories/:id
+  // PUT /categories/:id
   updateCategorie: async (req, res) => {
     try {
       const categorieMisAJour = await categorieService.updatecategorie(
@@ -49,7 +49,7 @@ const categorieController = {
     }
   },
 
-  // DELETE /api/categories/:id
+  // DELETE /categories/:id
   deleteCategorie: async (req, res) => {
     try {
       const supprime = await categorieService.deletecategorie(req.params.id);

@@ -1,12 +1,14 @@
 import express from "express";
 import categorieController from "../controllers/categorieController.js";
+import authMiddleware from "../middleware/authMiddleware.js";
+import adminOnly from "../middleware/adminOnly.js";
 
 const router = express.Router();
 
-router.get("/", categorieController.getCategories);
-router.get("/:id", categorieController.getCategorieById);
-router.post("/", categorieController.createCategorie);
-router.put("/:id", categorieController.updateCategorie);
-router.delete("/:id", categorieController.deleteCategorie);
+router.get("/", authMiddleware, adminOnly, categorieController.getCategories);
+router.get("/:id", authMiddleware, adminOnly, categorieController.getCategorieById);
+router.post("/", authMiddleware, adminOnly, categorieController.createCategorie);
+router.put("/:id", authMiddleware, adminOnly, categorieController.updateCategorie);
+router.delete("/:id", authMiddleware, adminOnly, categorieController.deleteCategorie);
 
 export default router;

@@ -1,7 +1,7 @@
 import produitService from "../services/produitService.js";
 
 const produitController = {
-  // GET /api/produits
+  // GET /produits
   getProduits: async (req, res) => {
     try {
       const produits = await produitService.getListeProduits();
@@ -11,7 +11,7 @@ const produitController = {
     }
   },
 
-  // GET /api/produits/:id
+  // GET /produits/:id
   getProduitById: async (req, res) => {
     try {
       const produit = await produitService.getProduitById(req.params.id);
@@ -24,7 +24,7 @@ const produitController = {
     }
   },
 
-  // POST /api/produits
+  // POST /produits
   createProduit: async (req, res) => {
     try {
       const nouveauProduit = await produitService.createProduit(req.body);
@@ -34,7 +34,7 @@ const produitController = {
     }
   },
 
-  // PUT /api/produits/:id
+  // PUT /produits/:id
   updateProduit: async (req, res) => {
     try {
       const produitMisAJour = await produitService.updateProduit(
@@ -50,7 +50,7 @@ const produitController = {
     }
   },
 
-  // DELETE /api/produits/:id
+  // DELETE /produits/:id
   deleteProduit: async (req, res) => {
     try {
       const supprime = await produitService.deleteProduit(req.params.id);

@@ -1,7 +1,7 @@
 import commandeService from "../services/commandeService.js";
 
 const commandeController = {
-  // POST /api/commandes (formulaire public)
+  // POST /commandes (formulaire public)
   createCommande: async (req, res) => {
     try {
       const commande = await commandeService.createCommande(req.body);
@@ -11,7 +11,7 @@ const commandeController = {
     }
   },
 
-  // GET /api/admin/commandes (dashboard admin)
+  // GET /admin/commandes (dashboard admin)
   getToutesCommandes: async (req, res) => {
     try {
       const commandes = await commandeService.getToutesCommandes();
@@ -21,7 +21,7 @@ const commandeController = {
     }
   },
 
-  // GET /api/admin/commandes/:id
+  // GET /admin/commandes/:id
   getCommandeById: async (req, res) => {
     try {
       const commande = await commandeService.getCommandeById(req.params.id);
@@ -34,7 +34,7 @@ const commandeController = {
     }
   },
 
-  // PATCH /api/admin/commandes/:id/statut
+  // PATCH /admin/commandes/:id/statut
   updateStatutCommande: async (req, res) => {
     try {
       const commande = await commandeService.updateStatutCommande(
