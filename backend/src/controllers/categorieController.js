@@ -1,9 +1,10 @@
+import categorieService from "../services/categorieService.js";
 
 const categorieController = {
   // GET /categories
   getCategories: async (req, res) => {
     try {
-      const categories = await categorieService.getListecategories();
+      const categories = await categorieService.getListeCategories();
       res.status(200).json(categories);
     } catch (err) {
       res.status(500).json({ message: err.message });
@@ -26,7 +27,7 @@ const categorieController = {
   // POST /categories
   createCategorie: async (req, res) => {
     try {
-      const nouveaucategorie = await categorieService.createcategorie(req.body);
+      const nouveaucategorie = await categorieService.createCategorie(req.body);
       res.status(201).json(nouveaucategorie);
     } catch (err) {
       res.status(400).json({ message: err.message });

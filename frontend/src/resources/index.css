@@ -1,0 +1,16 @@
+/* Item sélectionné dans le menu Toolpad */
+.MuiListItemButton-root.Mui-selected {
+  background-color: #3E5F44 !important;  /* fond vert */
+  color: #ffffff !important;             /* texte blanc */
+}
+
+/* Texte de l’item sélectionné */
+.MuiListItemButton-root.Mui-selected .MuiTypography-root {
+  color: #ffffff !important;
+}
+
+/* Icône de l’item sélectionné */
+.MuiListItemButton-root.Mui-selected .MuiListItemIcon-root,
+.MuiListItemButton-root.Mui-selected .MuiSvgIcon-root {
+  color: #ffffff !important;
+}

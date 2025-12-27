@@ -1,7 +1,7 @@
 import Categorie from "../models/Categorie.model.js";
 
 const categorieService = {
-  getListeProduits: () => {
+  getListeCategories: () => {
     return Categorie.find();
   },
 

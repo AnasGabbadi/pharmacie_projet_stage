@@ -1,7 +1,6 @@
 import produitService from "../services/produitService.js";
 
 const produitController = {
-  // GET /produits
   getProduits: async (req, res) => {
     try {
       const produits = await produitService.getListeProduits();
@@ -11,7 +10,6 @@ const produitController = {
     }
   },
 
-  // GET /produits/:id
   getProduitById: async (req, res) => {
     try {
       const produit = await produitService.getProduitById(req.params.id);
@@ -24,7 +22,6 @@ const produitController = {
     }
   },
 
-  // POST /produits
   createProduit: async (req, res) => {
     try {
       const nouveauProduit = await produitService.createProduit(req.body);
@@ -34,7 +31,6 @@ const produitController = {
     }
   },
 
-  // PUT /produits/:id
   updateProduit: async (req, res) => {
     try {
       const produitMisAJour = await produitService.updateProduit(
@@ -50,7 +46,6 @@ const produitController = {
     }
   },
 
-  // DELETE /produits/:id
   deleteProduit: async (req, res) => {
     try {
       const supprime = await produitService.deleteProduit(req.params.id);
