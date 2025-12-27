@@ -5,7 +5,7 @@ import adminOnly from "../middleware/adminOnly.js";
 
 const router = express.Router();
 
-router.get("/", authMiddleware, adminOnly, categorieController.getCategories);
+router.get("/", categorieController.getCategories);
 router.get("/:id", authMiddleware, adminOnly, categorieController.getCategorieById);
 router.post("/", authMiddleware, adminOnly, categorieController.createCategorie);
 router.put("/:id", authMiddleware, adminOnly, categorieController.updateCategorie);

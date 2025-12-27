@@ -11,6 +11,12 @@ export async function apiFetch(endpoint, options = {}) {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {}),
     },
+
+    body: options.body
+      ? isFormData
+        ? options.body
+        : JSON.stringify(options.body)
+      : undefined,
   });
 
   if (response.status === 401) {

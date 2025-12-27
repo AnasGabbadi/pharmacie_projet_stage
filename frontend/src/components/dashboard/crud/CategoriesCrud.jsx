@@ -1,3 +1,4 @@
+// src/pages/admin/components/categories/CategoriesCrud.jsx
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -10,56 +11,56 @@ import {
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { Delete, Edit, Add, Visibility } from "@mui/icons-material";
-import ProduitForm from "./form/ProduitForm";
+import CategorieForm from "./form/CategorieForm";
 import {
-  adminGetProduits,
-  adminDeleteProduit,
-} from "../../../services/produitsAdminApi";
+  adminGetCategories,
+  adminDeleteCategorie,
+} from "../../../services/categoriesAdminApi";
 
-function ProduitsCrud() {
-  const [produits, setProduits] = useState([]);
+function CategoriesCrud() {
+  const [categories, setCategories] = useState([]);
   const [popupOpen, setPopupOpen] = useState(false);
-  const [editingProduit, setEditingProduit] = useState(null);
-  const [viewingProduit, setViewingProduit] = useState(null);
+  const [editingCategorie, setEditingCategorie] = useState(null);
+  const [viewingCategorie, setViewingCategorie] = useState(null);
 
-  const fetchProduits = async () => {
-    const res = await adminGetProduits();
-    setProduits(res.items || res || []);
+  const fetchCategories = async () => {
+    const res = await adminGetCategories();
+    setCategories(res.items || res || []);
   };
 
   useEffect(() => {
-    fetchProduits();
+    fetchCategories();
   }, []);
 
   const handleAddClick = () => {
-    setEditingProduit(null);
+    setEditingCategorie(null);
     setPopupOpen(true);
   };
 
-  const handleEditClick = (produit) => {
-    setEditingProduit(produit);
+  const handleEditClick = (categorie) => {
+    setEditingCategorie(categorie);
     setPopupOpen(true);
   };
 
-  const handleViewClick = (produit) => {
-    setViewingProduit(produit);
+  const handleViewClick = (categorie) => {
+    setViewingCategorie(categorie);
   };
 
   const handleDeleteClick = async (id) => {
     if (window.confirm("Confirmer la suppression ?")) {
-      await adminDeleteProduit(id);
-      fetchProduits();
+      await adminDeleteCategorie(id);
+      fetchCategories();
     }
   };
 
   const handleClosePopup = () => {
     setPopupOpen(false);
-    setEditingProduit(null);
-    fetchProduits();
+    setEditingCategorie(null);
+    fetchCategories();
   };
 
   const handleCloseView = () => {
-    setViewingProduit(null);
+    setViewingCategorie(null);
   };
 
   return (
@@ -87,8 +88,10 @@ function ProduitsCrud() {
             fontSize: { xs: "1.2rem", sm: "1.8rem" },
           }}
         >
-          <span style={{ color: "#3E5F44", fontWeight: 700 }}>Produits / </span>
-          Liste des produits
+          <span style={{ color: "#3E5F44", fontWeight: 700 }}>
+            Catégories /{" "}
+          </span>
+          Liste des catégories
         </Typography>
 
         <IconButton
@@ -122,7 +125,7 @@ function ProduitsCrud() {
         }}
       >
         <DataGrid
-          rows={produits}
+          rows={categories}
           columns={[
             {
               field: "nom",
@@ -134,37 +137,6 @@ function ProduitsCrud() {
               align: "center",
             },
             {
-              field: "imageUrl",
-              headerName: "Image",
-              flex: 0.5,
-              minWidth: 90,
-              headerClassName: "custom-header",
-              headerAlign: "center",
-              align: "center",
-              renderCell: (params) =>
-                params.value ? (
-                  <Box
-                    component="img"
-                    src={params.value}
-                    alt="img"
-                    sx={{
-                      height: 40,
-                      width: 40,
-                      objectFit: "cover",
-                      borderRadius: 1,
-                      border: "2px solid #e0e0e0",
-                    }}
-                  />
-                ) : (
-                  <Typography
-                    variant="caption"
-                    sx={{ color: "#aaa", fontStyle: "italic" }}
-                  >
-                    Aucune
-                  </Typography>
-                ),
-            },
-            {
               field: "description",
               headerName: "Description",
               flex: 1.5,
@@ -174,24 +146,16 @@ function ProduitsCrud() {
               align: "center",
             },
             {
-              field: "prix",
-              headerName: "Prix",
-              width: 110,
-              headerClassName: "custom-header",
-              headerAlign: "center",
-              align: "center",
-              valueFormatter: (value) => (value != null ? `${value} DH` : ""),
-            },
-            {
-              field: "stock",
-              headerName: "Stock",
-              width: 100,
+              field: "slug",
+              headerName: "Slug",
+              flex: 1,
+              minWidth: 120,
               headerClassName: "custom-header",
               headerAlign: "center",
               align: "center",
             },
             {
-              field: "actif",
+              field: "active",
               headerName: "Actif",
               width: 90,
               headerClassName: "custom-header",
@@ -340,16 +304,19 @@ function ProduitsCrud() {
             textAlign: "center",
           }}
         >
-          {editingProduit ? "Modifier le produit" : "Ajouter un produit"}
+          {editingCategorie ? "Modifier la catégorie" : "Ajouter une catégorie"}
         </DialogTitle>
         <DialogContent sx={{ p: 3 }}>
-          <ProduitForm initialData={editingProduit} onClose={handleClosePopup} />
+          <CategorieForm
+            initialData={editingCategorie}
+            onClose={handleClosePopup}
+          />
         </DialogContent>
       </Dialog>
 
-      {/* Dialog View produit (détails en lecture seule) */}
+      {/* Dialog View catégorie */}
       <Dialog
-        open={!!viewingProduit}
+        open={!!viewingCategorie}
         onClose={handleCloseView}
         fullWidth
         maxWidth="sm"
@@ -362,48 +329,29 @@ function ProduitsCrud() {
       >
         <DialogTitle
           sx={{
-            background: "linear-gradient(135deg, #3E5F44 0%, #3E5F44 100%)",
+            background: "linear-gradient(135deg, #3E5F44 0%, #2f4734 100%)",
             color: "white",
             fontWeight: 600,
             textAlign: "center",
           }}
         >
-          Détails du produit
+          Détails de la catégorie
         </DialogTitle>
         <DialogContent sx={{ p: 3 }}>
-          {viewingProduit && (
+          {viewingCategorie && (
             <Stack spacing={2}>
-              {viewingProduit.imageUrl && (
-                <Box
-                  component="img"
-                  src={viewingProduit.imageUrl}
-                  alt={viewingProduit.nom}
-                  sx={{
-                    width: "100%",
-                    maxHeight: 300,
-                    objectFit: "contain",
-                    borderRadius: 2,
-                    border: "1px solid #e0e0e0",
-                  }}
-                />
-              )}
               <Typography variant="h6" fontWeight={600}>
-                {viewingProduit.nom}
+                {viewingCategorie.nom}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {viewingProduit.description || "Aucune description"}
+                {viewingCategorie.description || "Aucune description"}
               </Typography>
-              <Stack direction="row" spacing={2}>
-                <Typography variant="body2">
-                  <strong>Prix :</strong> {viewingProduit.prix} DH
-                </Typography>
-                <Typography variant="body2">
-                  <strong>Stock :</strong> {viewingProduit.stock}
-                </Typography>
-              </Stack>
+              <Typography variant="body2">
+                <strong>Slug :</strong> {viewingCategorie.slug || "N/A"}
+              </Typography>
               <Typography variant="body2">
                 <strong>Actif :</strong>{" "}
-                {viewingProduit.actif ? "Oui" : "Non"}
+                {viewingCategorie.active ? "Oui" : "Non"}
               </Typography>
             </Stack>
           )}
@@ -413,4 +361,4 @@ function ProduitsCrud() {
   );
 }
 
-export default ProduitsCrud;
+export default CategoriesCrud;

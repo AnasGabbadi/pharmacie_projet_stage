@@ -3,13 +3,13 @@ import { apiFetch } from "./apiFetch";
 export function registerAdmin({ nom, email, motDePasse }) {
   return apiFetch("/utilisateur/register", {
     method: "POST",
-    body: JSON.stringify({ nom, email, motDePasse }),
+    body: { nom, email, motDePasse },
   });
 }
 
 export function loginAdmin({ email, motDePasse }) {
   return apiFetch("/utilisateur/login", {
     method: "POST",
-    body: JSON.stringify({ email, motDePasse }),
+    body: { email, motDePasse },
   });
 }

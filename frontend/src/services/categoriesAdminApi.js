@@ -1,20 +1,21 @@
 import { apiFetch } from "./apiFetch";
 
-export function adminGetCategories() {
-  return apiFetch("/categorie");
+export function adminGetCategories(params = {}) {
+  const query = new URLSearchParams(params).toString();
+  return apiFetch(`/categorie${query ? `?${query}` : ""}`);
 }
 
 export function adminCreateCategorie(data) {
   return apiFetch("/categorie", {
     method: "POST",
-    body: JSON.stringify(data),
+    body: data,
   });
 }
 
 export function adminUpdateCategorie(id, data) {
   return apiFetch(`/categorie/${id}`, {
     method: "PUT",
-    body: JSON.stringify(data),
+    body: data,
   });
 }
 

@@ -37,7 +37,7 @@ const categorieController = {
   // PUT /categories/:id
   updateCategorie: async (req, res) => {
     try {
-      const categorieMisAJour = await categorieService.updatecategorie(
+      const categorieMisAJour = await categorieService.updateCategorie(
         req.params.id,
         req.body
       );
@@ -53,7 +53,7 @@ const categorieController = {
   // DELETE /categories/:id
   deleteCategorie: async (req, res) => {
     try {
-      const supprime = await categorieService.deletecategorie(req.params.id);
+      const supprime = await categorieService.deleteCategorie(req.params.id);
       if (!supprime) {
         return res.status(404).json({ message: "categorie non trouvé" });
       }

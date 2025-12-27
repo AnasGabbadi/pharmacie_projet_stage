@@ -3,78 +3,98 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 const generateJWT = (payload) => {
-    return jwt.sign(payload, process.env.JWT_SECRET || "dev-secret", {
+  return jwt.sign(payload, process.env.JWT_SECRET || "dev-secret", {
     expiresIn: "7d",
-    });
+  });
 };
 
 const utilisateurService = {
-    async register({ nom, email, motDePasse }) {
+  async register({ nom, email, motDePasse }) {
     const existing = await Utilisateur.findOne({ email });
     if (existing) {
-        return { statusCode: 400, data: "Cet utilisateur existe déjà." };
+      return { statusCode: 400, data: "Cet utilisateur existe déjà." };
     }
 
     const motDePasseHash = await bcrypt.hash(motDePasse, 10);
 
     const user = await Utilisateur.create({
-        nom,
-        email,
-        motDePasseHash,
+      nom,
+      email,
+      motDePasseHash,
     });
 
     const token = generateJWT({ id: user._id, role: user.role, email });
 
     return {
-        statusCode: 201,
-        data: {
+      statusCode: 201,
+      data: {
         token,
         utilisateur: {
-            id: user._id,
-            nom: user.nom,
-            email: user.email,
-            role: user.role,
+          id: user._id,
+          nom: user.nom,
+          email: user.email,
+          role: user.role,
         },
-        },
+      },
     };
-    },
+  },
 
-    // Login admin
-    async login({ email, motDePasse }) {
-    const user = await Utilisateur.findOne({ email }).select(
-        "+motDePasseHash"
-    );
+  async login({ email, motDePasse }) {
+    const user = await Utilisateur.findOne({ email }).select("+motDePasseHash");
 
     if (!user) {
-        return {
+      return {
         statusCode: 400,
         data: "Email ou mot de passe incorrect.",
-        };
+      };
     }
 
     const passwordMatch = await bcrypt.compare(motDePasse, user.motDePasseHash);
     if (!passwordMatch) {
-        return {
+      return {
         statusCode: 400,
         data: "Email ou mot de passe incorrect.",
-        };
+      };
     }
 
     const token = generateJWT({ id: user._id, role: user.role, email });
 
     return {
-        statusCode: 200,
-        data: {
+      statusCode: 200,
+      data: {
         token,
         utilisateur: {
-            id: user._id,
-            nom: user.nom,
-            email: user.email,
-            role: user.role,
+          id: user._id,
+          nom: user.nom,
+          email: user.email,
+          role: user.role,
         },
-        },
+      },
     };
-    },
+  },
+
+  // ✅ Récupérer profil par ID
+  async getUtilisateurById(id) {
+    const user = await Utilisateur.findById(id).select("-motDePasseHash");
+    return user;
+  },
+
+  // ✅ Mettre à jour profil
+  async updateUtilisateur(id, data) {
+    const user = await Utilisateur.findByIdAndUpdate(
+      id,
+      { $set: data },
+      { new: true }
+    ).select("-motDePasseHash");
+    return user;
+  },
+
+  // ✅ Vérifier ancien mot de passe
+  async verifyPassword(id, motDePasse) {
+    const user = await Utilisateur.findById(id).select("+motDePasseHash");
+    if (!user) return false;
+    return await bcrypt.compare(motDePasse, user.motDePasseHash);
+  },
 };
 
 export default utilisateurService;

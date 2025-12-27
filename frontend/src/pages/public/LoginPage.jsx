@@ -8,8 +8,8 @@ import {
   Alert,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { loginAdmin } from "../services/authApi";
-import { useAuth } from "../context/Auth/AuthContext";
+import { loginAdmin } from "../../services/authApi";
+import { useAuth } from "../../context/Auth/AuthContext";
 
 const LoginPage = () => {
   const [error, setError] = useState("");

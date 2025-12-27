@@ -2,7 +2,6 @@ import Typography from "@mui/material/Typography";
 import { createTheme } from "@mui/material/styles";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import InventoryIcon from "@mui/icons-material/Inventory";
-import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import { Button, Stack } from "@mui/material";
 import { LogOut } from "lucide-react";
 
@@ -10,8 +9,10 @@ import { AppProvider } from "@toolpad/core/AppProvider";
 import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import { DemoProvider, useDemoRouter } from "@toolpad/core/internal";
 
-import Dashboard from "../components/dashboard/Dashboard";
-import ProduitsCrud from "../components/dashboard/crud/ProduitsCrud";
+import Dashboard from "../../components/dashboard/Dashboard";
+import ProduitsCrud from "../../components/dashboard/crud/ProduitsCrud";
+import CategoriesCrud from "../../components/dashboard/crud/CategoriesCrud";
+import ProfilPage from "./ProfilPage";
 // import CommandesCrud from "../components/crud/CommandesCrud";
 
 const NAVIGATION = [
@@ -26,9 +27,14 @@ const NAVIGATION = [
     icon: <InventoryIcon />,
   },
   {
-    segment: "commandes",
-    title: "Commandes",
-    icon: <ReceiptLongIcon />,
+    segment: "categories",
+    title: "Catégories",
+    icon: <InventoryIcon />,
+  },
+  {
+    segment: "profil",
+    title: "Mon Profil",
+    icon: <InventoryIcon />,
   },
 ];
 
@@ -98,8 +104,12 @@ function renderPageContent(pathname) {
       return <Dashboard />;
     case "/produits":
       return <ProduitsCrud />;
+    case "/categories":
+      return <CategoriesCrud />;
+    case "/profil":
+      return <ProfilPage />;
     // case "/commandes":
-    //   return <CommandesCrud />;
+      // return <CommandesCrud />;
     default:
       return <Dashboard />;
   }
