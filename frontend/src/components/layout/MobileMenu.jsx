@@ -1,4 +1,3 @@
-// src/components/layout/MobileMenu.jsx
 import {
   Drawer,
   List,

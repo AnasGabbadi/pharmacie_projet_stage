@@ -32,8 +32,8 @@ const upload = multer({ storage });
 // ---------- ROUTES PUBLICATIONS PRODUIT ----------
 
 // LISTE / DETAILS (pas besoin d'upload ici)
-router.get("/", authMiddleware, adminOnly, produitController.getProduits);
-router.get("/:id", authMiddleware, adminOnly, produitController.getProduitById);
+router.get("/", produitController.getProduits);
+router.get("/:id", produitController.getProduitById);
 
 // CREATE avec FormData + image
 router.post(

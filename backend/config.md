@@ -8,3 +8,4 @@ npm install bcrypt
 npm install jsonwebtoken
 npm install cors
 npm install multer
+npm install @faker-js/faker --save-dev

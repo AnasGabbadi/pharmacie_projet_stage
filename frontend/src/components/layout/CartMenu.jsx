@@ -1,7 +1,5 @@
-// src/components/layout/CartMenu.jsx
 import {
   Menu,
-  MenuItem,
   Box,
   Typography,
   Stack,

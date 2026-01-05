@@ -1,133 +1,37 @@
-import { Box, Container, Typography, Button, Stack } from "@mui/material";
-import { LocalShipping, VerifiedUser, LocalOffer } from "@mui/icons-material";
-
 function HeroSection() {
   return (
-    <Box
-      sx={{
-        background: "linear-gradient(135deg, #3E5F44 0%, #2f4734 100%)",
-        color: "white",
-        py: { xs: 6, md: 10 },
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      <Container maxWidth="lg">
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={4}
-          alignItems="center"
-        >
-          {/* Texte principal */}
-          <Box flex={1}>
-            <Typography
-              variant="h2"
-              fontWeight={700}
-              sx={{
-                fontSize: { xs: "2rem", md: "3.5rem" },
-                mb: 2,
-              }}
-            >
-              Votre Parapharmacie en Ligne au Maroc
-            </Typography>
-            <Typography
-              variant="h6"
-              sx={{
-                mb: 4,
-                opacity: 0.95,
-                fontSize: { xs: "1rem", md: "1.25rem" },
-              }}
-            >
-              Découvrez nos produits de qualité pour votre santé et bien-être
-            </Typography>
-
-            <Stack direction="row" spacing={2} flexWrap="wrap">
-              <Button
-                variant="contained"
-                size="large"
-                sx={{
-                  backgroundColor: "white",
-                  color: "#3E5F44",
-                  px: 4,
-                  py: 1.5,
-                  fontSize: "1.1rem",
-                  "&:hover": {
-                    backgroundColor: "#f0f0f0",
-                  },
-                }}
-              >
-                Découvrir nos produits
-              </Button>
-            </Stack>
-          </Box>
-
-          {/* Image Hero */}
-          <Box
-            flex={1}
-            sx={{
-              display: { xs: "none", md: "block" },
-            }}
-          >
-            <Box
-              component="img"
-              src="/images/img1.jpg"
-              alt="Pharmacie"
-              sx={{
-                width: "100%",
-                maxWidth: 800,
-                height: "auto",
-              }}
-            />
-          </Box>
-        </Stack>
-
-        {/* Features */}
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={4}
-          sx={{
-            mt: 8,
-            justifyContent: "space-around",
-          }}
-        >
-          <Stack direction="row" spacing={2} alignItems="center">
-            <LocalShipping sx={{ fontSize: 40 }} />
-            <Box>
-              <Typography variant="h6" fontWeight={600}>
-                Livraison rapide
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Partout au Maroc
-              </Typography>
-            </Box>
-          </Stack>
-
-          <Stack direction="row" spacing={2} alignItems="center">
-            <VerifiedUser sx={{ fontSize: 40 }} />
-            <Box>
-              <Typography variant="h6" fontWeight={600}>
-                Produits certifiés
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Qualité garantie
-              </Typography>
-            </Box>
-          </Stack>
-
-          <Stack direction="row" spacing={2} alignItems="center">
-            <LocalOffer sx={{ fontSize: 40 }} />
-            <Box>
-              <Typography variant="h6" fontWeight={600}>
-                Promotions
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                Offres exclusives
-              </Typography>
-            </Box>
-          </Stack>
-        </Stack>
-      </Container>
-    </Box>
+    <section className="bg-gradient-to-r from-[#93DA97] to-[#E8FFD7] py-16 px-6">
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="max-w-xl">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Prenez soin de vous avec confiance et qualité.
+          </h1>
+          <p className="text-gray-600 mb-8">
+            Découvrez notre sélection de produits de parapharmacie, choisis avec rigueur pour leur qualité et leur authenticité. Votre bien-être est notre priorité.
+          </p>
+          <div className="flex gap-4">
+            <button className="px-6 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+              Découvrir les produits
+            </button>
+            <button className="px-6 py-3 bg-[#3E5F44] text-white rounded-lg hover:bg-[#5E936C] transition">
+              Voir les catégories
+            </button>
+          </div>
+        </div>
+        
+        <div className="w-80 h-64 bg-[#5E936C] rounded-lg flex items-center justify-center">
+          <div className="text-center text-gray-400">
+            <div className="w-[19rem] h-24 mx-auto mb-2 bg-gray-300 rounded-full flex items-center justify-center">
+              <img
+                className="rounded-[5%]"
+                src="/images/heroSectionLogo.jpg"
+                alt="Image de l'entreprise"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 

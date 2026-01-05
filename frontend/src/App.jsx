@@ -4,7 +4,6 @@ import LoginPage from "./pages/public/LoginPage";
 import { useAuth } from "./context/Auth/AuthContext";
 import "./resources/index.css";
 import HomePage from "./pages/public/HomePage";
-import Navbar from "./components/layout/Navbar";
 
 function PrivateAdminRoute({ children }) {
   const { state } = useAuth();
