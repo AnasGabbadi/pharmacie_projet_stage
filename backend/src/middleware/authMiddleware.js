@@ -37,7 +37,7 @@ const authMiddleware = async (req, res, next) => {
     let user = null;
     if (payload.role === "client") {
       user = await Client.findById(payload.id).select("nom prenom email telephone role actif adresses");
-    } else if (payload.role === "admin") {
+    } else if (payload.role === "admin" || payload.role === "manager") {
       user = await Utilisateur.findById(payload.id).select("nom email role");
     }
 

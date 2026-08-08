@@ -5,7 +5,7 @@ const categorieService = {
     return Categorie.find();
   },
 
-  getProduitById: (id) => {
+  getcategorieById: (id) => {
     return Categorie.findById(id);
   },
 

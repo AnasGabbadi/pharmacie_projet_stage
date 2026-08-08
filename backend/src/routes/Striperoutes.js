@@ -1,5 +1,5 @@
 import express from "express";
-import stripeService from "../services/stripeService.js";
+import stripeService from "../services/Stripeservice.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import requireRole from "../middleware/roleAuth.js";
 
