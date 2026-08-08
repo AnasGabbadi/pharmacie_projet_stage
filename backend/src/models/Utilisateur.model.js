@@ -13,8 +13,8 @@ const UtilisateurSchema = new mongoose.Schema(
         motDePasseHash: { type: String, required: true, select: false },
         role: {
             type: String,
-            enum: ["admin"],
-            default: "admin",
+            enum: ["admin", "manager"],
+            default: "manager",
         },
     },{ timestamps: true }
 );

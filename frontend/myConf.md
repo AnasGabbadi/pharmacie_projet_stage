@@ -3,3 +3,4 @@ npm install react-router-dom
 npm install @mui/material @mui/icons-material @emotion/react @emotion/styled
 npm install lucide-react
 npm install @toolpad/core
+npm install @stripe/react-stripe-js @stripe/stripe-js

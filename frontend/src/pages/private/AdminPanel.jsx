@@ -4,21 +4,24 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import { Button, Stack } from "@mui/material";
 import { LogOut } from "lucide-react";
+import { useAuth } from "../../hooks/useAuth";
 
 import { AppProvider } from "@toolpad/core/AppProvider";
 import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import { DemoProvider, useDemoRouter } from "@toolpad/core/internal";
 
-import Dashboard from "../../components/dashboard/Dashboard";
-import ProduitsCrud from "../../components/dashboard/crud/ProduitsCrud";
-import CategoriesCrud from "../../components/dashboard/crud/CategoriesCrud";
+import Dashboard from "../../components/dashboard/AdminDashboard/Dashboard";
+import ProduitsCrud from "../../components/dashboard/AdminDashboard/crud/ProduitsCrud";
+import CategoriesCrud from "../../components/dashboard/AdminDashboard/crud/CategoriesCrud";
 import ProfilPage from "./ProfilPage";
-// import CommandesCrud from "../components/crud/CommandesCrud";
+import auth from "../../api/auth";
+import UsersCrud from "../../components/dashboard/AdminDashboard/crud/UsersCrud";
+import CommandesCrud from "../../components/dashboard/AdminDashboard/crud/CommandesCrud";
 
 const NAVIGATION = [
   {
     segment: "dashboard",
-    title: "Dashboard",
+    title: "Tableau de bord",
     icon: <DashboardIcon />,
   },
   {
@@ -29,6 +32,16 @@ const NAVIGATION = [
   {
     segment: "categories",
     title: "Catégories",
+    icon: <InventoryIcon />,
+  },
+  {
+    segment: "commandes",
+    title: "Commandes",
+    icon: <InventoryIcon />,
+  },
+  {
+    segment: "utilisateurs",
+    title: "Utilisateurs",
     icon: <InventoryIcon />,
   },
   {
@@ -74,9 +87,16 @@ const adminTheme = createTheme({
 });
 
 function SidebarFooterLogout({ mini }) {
-  const handleLogout = () => {
-    localStorage.removeItem("admin_token");
-    window.location.href = "/admin/login";
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await auth.logout();
+    } catch (error) {
+      console.log("Logout client seulement");
+    }
+    
+    window.location.href = "/login";
   };
 
   return (
@@ -91,6 +111,10 @@ function SidebarFooterLogout({ mini }) {
         startIcon={<LogOut size={18} />}
         color="error"
         variant="text"
+        sx={{ 
+          color: "#d32f2f",
+          "&:hover": { backgroundColor: "rgba(211,47,47,0.04)" }
+        }}
       >
         {!mini && "Déconnexion"}
       </Button>
@@ -106,10 +130,12 @@ function renderPageContent(pathname) {
       return <ProduitsCrud />;
     case "/categories":
       return <CategoriesCrud />;
+    case "/commandes":
+      return <CommandesCrud />;
+    case "/utilisateurs":
+      return <UsersCrud />;
     case "/profil":
       return <ProfilPage />;
-    // case "/commandes":
-      // return <CommandesCrud />;
     default:
       return <Dashboard />;
   }
@@ -122,24 +148,24 @@ function AdminPanel(props) {
 
   return (
     <DemoProvider window={demoWindow}>
-        <AppProvider
-            navigation={NAVIGATION}
-            branding={{
-                logo: (
-                <Typography
-                    variant="h6"
-                    sx={{ fontWeight: "bold", color: "#3E5F44" }}
-                >
-                    ParaVital
-                </Typography>
-                ),
-                title: "",
-                homeUrl: "/dashboard",
-            }}
-            router={router}
-            theme={adminTheme}
-            window={demoWindow}
-        >
+      <AppProvider
+        navigation={NAVIGATION}
+        branding={{
+          logo: (
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: "bold", color: "#3E5F44" }}
+            >
+              ParaVital
+            </Typography>
+          ),
+          title: "",
+          homeUrl: "/dashboard",
+        }}
+        router={router}
+        theme={adminTheme}
+        window={demoWindow}
+      >
         <DashboardLayout
           slots={{
             sidebarFooter: SidebarFooterLogout,

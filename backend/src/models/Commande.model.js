@@ -3,9 +3,20 @@ import { LigneCommandeSchema } from "./LigneCommande.model.js";
 
 const CommandeSchema = new mongoose.Schema(
   {
+    clientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Client",
+      required: true,
+    },
     nomClient: { type: String, required: true, trim: true },
+    emailClient: { type: String, required: true, trim: true },
     telephone: { type: String, required: true, trim: true },
-    adresseLivraison: { type: String, required: true, trim: true },
+    adresseLivraison: {
+      rue: { type: String, required: true },
+      ville: { type: String, required: true },
+      codePostal: { type: String },
+      pays: { type: String, default: "Maroc" },
+    },
     lignes: {
       type: [LigneCommandeSchema],
       validate: {
@@ -16,17 +27,25 @@ const CommandeSchema = new mongoose.Schema(
     montantTotal: { type: Number, required: true, min: 0 },
     modePaiement: {
       type: String,
-      enum: ["COD"],
+      enum: ["COD", "carte"],
       default: "COD",
     },
     dateCommande: { type: Date, default: Date.now },
     statut: {
       type: String,
-      enum: ["en_attente", "validee", "preparee", "livree", "annulee"],
+      enum: ["en_attente_paiement", "en_attente", "validee", "preparee", "livree", "annulee"],
       default: "en_attente",
     },
+    paymentIntentId: { type: String, default: null }, // ID Stripe
+    datePaiement:    { type: Date,   default: null }, // Date paiement confirmé
+
+    dateCommande: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );
+
+// Index pour recherche par client
+CommandeSchema.index({ clientId: 1, createdAt: -1 });
+CommandeSchema.index({ statut: 1 });
 
 export default mongoose.model("Commande", CommandeSchema);

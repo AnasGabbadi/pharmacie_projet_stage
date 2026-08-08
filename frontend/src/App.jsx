@@ -1,38 +1,53 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import AdminPanel from "./pages/private/AdminPanel";
+import ClientPanel from "./pages/private/ClientPanel"; 
 import LoginPage from "./pages/public/LoginPage";
-import { useAuth } from "./context/Auth/AuthContext";
-import "./resources/index.css";
 import HomePage from "./pages/public/HomePage";
+import "./resources/index.css";
+import RegisterPage from "./pages/public/RegisterPage";
+import CartPage from "./pages/public/CartPage";
 
 function PrivateAdminRoute({ children }) {
-  const { state } = useAuth();
-
-  if (!state.token) {
-    return <Navigate to="/admin/login" replace />;
+  const role = localStorage.getItem('role');
+  if (role !== "admin") {
+    return <Navigate to="/login" replace />;
   }
+  return children;
+}
 
+function PrivateClientRoute({ children }) {
+  const role = localStorage.getItem('role');
+  if (role !== "client") {
+    return <Navigate to="/login" replace />;
+  }
   return children;
 }
 
 function App() {
   return (
     <Routes>
-      {/* Route publique */}
+      {/* 📱 PUBLIQUES */}
       <Route path="/" element={<HomePage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/panier" element={<CartPage />} />
 
-      {/* Route de login admin (publique) */}
-      <Route path="/admin/login" element={<LoginPage />} />
+      {/* 👑 ADMIN PROTÉGÉ - CORRIGÉ ! */}
+      <Route path="/admin/*" element={
+        <PrivateAdminRoute>
+          <AdminPanel />
+        </PrivateAdminRoute>
+      } />
+      
+      {/* 🛒 CLIENT PROTÉGÉ */}
+      <Route path="/client/*" element={
+        <PrivateClientRoute>
+          <ClientPanel />
+        </PrivateClientRoute>
+      } />
 
-      {/* Routes admin protégées */}
-      <Route
-        path="/admin/*"
-        element={
-          <PrivateAdminRoute>
-            <AdminPanel />
-          </PrivateAdminRoute>
-        }
-      />
+      {/* 🔄 404 */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

@@ -6,7 +6,7 @@ import multer from "multer";
 
 import produitController from "../controllers/produitController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
-import adminOnly from "../middleware/adminOnly.js";
+import requireRole from "../middleware/roleAuth.js";
 
 const router = express.Router();
 
@@ -39,7 +39,7 @@ router.get("/:id", produitController.getProduitById);
 router.post(
   "/",
   authMiddleware,
-  adminOnly,
+  requireRole(['admin']),
   upload.single("image"),          // 🔹 parse FormData + image
   async (req, res, next) => {
     try {
@@ -76,7 +76,7 @@ router.post(
 router.put(
   "/:id",
   authMiddleware,
-  adminOnly,
+  requireRole(['admin']),
   upload.single("image"),
   async (req, res, next) => {
     try {
@@ -114,7 +114,7 @@ router.put(
 router.delete(
   "/:id",
   authMiddleware,
-  adminOnly,
+  requireRole(['admin']),
   produitController.deleteProduit
 );
 

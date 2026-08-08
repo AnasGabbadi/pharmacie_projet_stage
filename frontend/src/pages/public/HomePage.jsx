@@ -7,72 +7,49 @@ import HeroSection from "../../components/home/HeroSection";
 import ProductSection from "../../components/home/ProductsSection";
 import Footer from "../../components/layout/Footer";
 import Header from "../../components/layout/Header";
-import { getProduits } from "../../services/produitsApi";
+import { useProduits } from "../../hooks/useProduits";       
 import BrandsSection from "../../components/home/BrandsSection";
 import PromoBannerAlt from "../../components/home/PromoBanner";
 
 function HomePage() {
-  const [featuredProducts, setFeaturedProducts] = useState([]);
-  const [newProducts, setNewProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { data: allProducts, loading, error, refetch } = useProduits();
 
-  // Fonction de formatage mémorisée
   const formatProduct = useCallback((product, prefix = "") => ({
-    id: `${prefix}-${product._id || product.id || Math.random()}`,
-    originalId: product._id || product.id,
+    _id: product._id || product.id,    
+    id: product._id || product.id,      
     name: product.nom,
-    price: `${product.prix} DH`,
-    image: product.imageUrl || null,
+    prix: product.prix,                  
     stock: product.stock,
-    description: product.description
+    image: product.imageUrl || product.images?.[0] || null,
+    description: product.description,
+    categorie: product.categorie?.nom || "Non classé",
+    
+    slug: `${prefix}-${product._id || product.id}`,
   }), []);
 
-  // Fonction fetchProducts mémorisée
-  const fetchProducts = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  const featuredProducts = useCallback(() => {
+    if (!Array.isArray(allProducts) || allProducts.length === 0) return [];
+    
+    return allProducts
+      .filter(p => p.actif) 
+      .slice(0, 8)
+      .map((product, index) => formatProduct(product, `featured-${index}`));
+  }, [allProducts, formatProduct]);
 
-      const allProducts = await getProduits();
-      
-      // Vérification que les données sont valides
-      if (!Array.isArray(allProducts) || allProducts.length === 0) {
-        throw new Error("Aucun produit disponible");
-      }
+  const newProducts = useCallback(() => {
+    if (!Array.isArray(allProducts) || allProducts.length === 0) return [];
+    
+    return allProducts
+      .filter(p => p.actif)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 8)
+      .map((product, index) => formatProduct(product, `new-${index}`));
+  }, [allProducts, formatProduct]);
 
-      // Featured products avec préfixe "featured"
-      const featured = allProducts
-        .slice(0, 4)
-        .map((product, index) => formatProduct(product, `featured-${index}`));
+  const handleRetry = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
-      // New products avec préfixe "new"
-      const newest = allProducts
-        .slice(-4)
-        .map((product, index) => formatProduct(product, `new-${index}`));
-
-      setFeaturedProducts(featured);
-      setNewProducts(newest);
-    } catch (err) {
-      console.error("Erreur lors du chargement des produits:", err);
-      setError(
-        err.message || "Impossible de charger les produits. Veuillez réessayer."
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [formatProduct]);
-
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
-  // Fonction de retry
-  const handleRetry = () => {
-    fetchProducts();
-  };
-
-  // Affichage pendant le chargement
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
@@ -89,7 +66,7 @@ function HomePage() {
         >
           <CircularProgress size={60} sx={{ color: "#3E5F44" }} />
           <Typography variant="body1" color="text.secondary">
-            Chargement des produits...
+            Chargement des produits phares...
           </Typography>
         </Box>
         <Footer />
@@ -97,7 +74,7 @@ function HomePage() {
     );
   }
 
-  // Affichage en cas d'erreur
+  // Error state (géré par hook)
   if (error) {
     return (
       <div className="min-h-screen bg-white">
@@ -123,28 +100,33 @@ function HomePage() {
   return (
     <div className="min-h-screen bg-white">
       <Header />
+      
+      {/* Sections fixes */}
       <HeroSection />
       <Features />
       <CategoriesSection />
       
-      {featuredProducts.length > 0 && (
+      {/* Produits phares */}
+      {featuredProducts().length > 0 && (
         <ProductSection 
           title="Nos produits phares" 
-          products={featuredProducts} 
+          products={featuredProducts()}
+          sx={{ my: 4 }}
         />
       )}
-      
+
       <PromoBannerAlt />
 
-      {newProducts.length > 0 && (
+      {/* Nouveautés */}
+      {newProducts().length > 0 && (
         <ProductSection 
           title="Nouveautés" 
-          products={newProducts} 
+          products={newProducts()}
+          sx={{ my: 4 }}
         />
       )}
 
-        <BrandsSection />
-      
+      <BrandsSection />
       <CTASection />
       <Footer />
     </div>
