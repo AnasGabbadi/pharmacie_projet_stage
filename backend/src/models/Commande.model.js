@@ -27,19 +27,16 @@ const CommandeSchema = new mongoose.Schema(
     montantTotal: { type: Number, required: true, min: 0 },
     modePaiement: {
       type: String,
-      enum: ["COD", "carte"],
+      enum: ["COD"],
       default: "COD",
     },
     dateCommande: { type: Date, default: Date.now },
     statut: {
       type: String,
-      enum: ["en_attente_paiement", "en_attente", "validee", "preparee", "livree", "annulee"],
+      enum: ["en_attente", "validee", "preparee", "livree", "annulee"],
       default: "en_attente",
     },
-    paymentIntentId: { type: String, default: null }, // ID Stripe
-    datePaiement:    { type: Date,   default: null }, // Date paiement confirmé
-
-    dateCommande: { type: Date, default: Date.now },
+    datePaiement: { type: Date, default: null }, // Date de validation/paiement confirmé
   },
   { timestamps: true }
 );

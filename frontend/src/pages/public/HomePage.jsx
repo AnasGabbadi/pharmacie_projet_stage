@@ -5,6 +5,7 @@ import CTASection from "../../components/home/CTASection";
 import Features from "../../components/home/FeaturedProducts";
 import HeroSection from "../../components/home/HeroSection";
 import ProductSection from "../../components/home/ProductsSection";
+import ProductSearchSection from "../../components/home/ProductSearchSection";
 import Footer from "../../components/layout/Footer";
 import Header from "../../components/layout/Header";
 import { useProduits } from "../../hooks/useProduits";       
@@ -105,7 +106,10 @@ function HomePage() {
       <HeroSection />
       <Features />
       <CategoriesSection />
-      
+
+      {/* Recherche, filtres et pagination sur l'ensemble du catalogue */}
+      <ProductSearchSection />
+
       {/* Produits phares */}
       {featuredProducts().length > 0 && (
         <ProductSection 

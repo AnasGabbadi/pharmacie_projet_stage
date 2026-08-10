@@ -50,8 +50,7 @@ const authController = {
   register: async (req, res) => {
   try {
     console.log("🔥 authController.register START");
-    console.log("📥 Body reçu:", req.body);
-    
+
     const { nom, prenom, email, telephone, motDePasse, adresse } = req.body;
     const sessionId = req.headers["x-session-id"];
 
@@ -83,8 +82,6 @@ const authController = {
       adresse,
       sessionId
     });
-
-    console.log("✅ clientService result:", result);
 
     // ✅ Réponse
     return res.status(result.statusCode).json(result);
@@ -180,7 +177,7 @@ const authController = {
             return res.status(400).json({ success: false, message: "Ancien mot de passe incorrect" });
         }
         const motDePasseHash = await hashPassword(nouveauMotDePasse);
-        await clientService.update(req.user.id, { motDePasseHash });
+        await clientService.updatePasswordHash(req.user.id, motDePasseHash);
         return res.status(200).json({ success: true, message: "Mot de passe modifié" });
       } else if (req.user.role === "admin") {
         const isValid = await utilisateurService.verifyPassword(

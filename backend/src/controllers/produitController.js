@@ -3,7 +3,17 @@ import produitService from "../services/produitService.js";
 const produitController = {
   getProduits: async (req, res) => {
     try {
-      const produits = await produitService.getListeProduits();
+      const { produits, pagination } = await produitService.getListeProduits(req.query);
+
+      // Le corps reste un tableau brut (compatibilité stricte avec les usages
+      // existants du frontend qui attendent Array.isArray(...) sur la réponse) ;
+      // les métadonnées de pagination sont exposées via des en-têtes dédiés.
+      res.set({
+        "X-Total-Count": String(pagination.total),
+        "X-Page": String(pagination.page),
+        "X-Limite": String(pagination.limite),
+        "X-Total-Pages": String(pagination.pages),
+      });
       res.status(200).json(produits);
     } catch (err) {
       res.status(500).json({ message: err.message });

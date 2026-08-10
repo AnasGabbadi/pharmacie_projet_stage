@@ -9,10 +9,32 @@ class ProduitsApi {
     return response.json();
   }
 
-  // 👁️ GET - Produit par ID
+  // 📄 GET - Liste produits + métadonnées de pagination (headers X-Total-Count
+  // etc., exposés en CORS) — pour la recherche/filtres/pagination de la home.
+  async getProduitsPage(params = {}) {
+    const cleaned = Object.fromEntries(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== "")
+    );
+    const query = new URLSearchParams(cleaned).toString();
+    const response = await fetch(`${API_BASE}/produits${query ? `?${query}` : ""}`);
+    const produits = await response.json();
+
+    return {
+      produits,
+      pagination: {
+        total: Number(response.headers.get("X-Total-Count")) || 0,
+        page: Number(response.headers.get("X-Page")) || Number(params.page) || 1,
+        limite: Number(response.headers.get("X-Limite")) || Number(params.limite) || 20,
+        pages: Number(response.headers.get("X-Total-Pages")) || 1,
+      },
+    };
+  }
+
+  // 👁️ GET - Produit par ID (expose ok/status pour distinguer 404 vs succès)
   async getProduitById(id) {
     const response = await fetch(`${API_BASE}/produits/${id}`);
-    return response.json();
+    const data = await response.json();
+    return { ok: response.ok, status: response.status, data };
   }
 
   // 👑 CREATE - Admin seulement

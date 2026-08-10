@@ -18,8 +18,8 @@ const commandeController = {
       if (!telephone) {
         return res.status(400).json({ success: false, message: "Téléphone obligatoire" });
       }
-      if (modePaiement && !["COD", "carte"].includes(modePaiement)) {
-        return res.status(400).json({ success: false, message: "Mode de paiement invalide (COD ou carte)" });
+      if (modePaiement && !["COD"].includes(modePaiement)) {
+        return res.status(400).json({ success: false, message: "Mode de paiement invalide (COD uniquement)" });
       }
 
       // ✅ commandeService (pas cartService)

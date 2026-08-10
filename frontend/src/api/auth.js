@@ -88,6 +88,49 @@ class AuthService {
     });
     return response.json();
   }
+
+  async getAdresses() {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE}/auth/me/adresses`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    return response.json();
+  }
+
+  async addAdresse(data) {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE}/auth/me/adresses`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  }
+
+  async updateAdresse(addressId, data) {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE}/auth/me/adresses/${addressId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  }
+
+  async deleteAdresse(addressId) {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE}/auth/me/adresses/${addressId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+    return response.json();
+  }
 }
 
 export default new AuthService();

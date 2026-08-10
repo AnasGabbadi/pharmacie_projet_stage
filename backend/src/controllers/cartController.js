@@ -1,4 +1,5 @@
 import cartService from "../services/cartService.js";
+import commandeService from "../services/commandeService.js";
 
 const getUserId = (req) => {
   if (req.user?.id || req.user?._id) {
@@ -192,7 +193,6 @@ const cartController = {
   checkout: async (req, res) => {
     try {
       const userId = req.user?.id || req.user?._id;
-      const { adresse } = req.body;
 
       // ✅ Checkout = Client AUTH requise
       if (!userId || !req.user) {
@@ -202,33 +202,37 @@ const cartController = {
         });
       }
 
-      const clientData = {
+      const { adresseLivraison, telephone, modePaiement, montantTotal } = req.body;
+
+      // Même validation que POST /api/commandes (commandeController.checkout)
+      if (!adresseLivraison?.rue || !adresseLivraison?.ville) {
+        return res.status(400).json({ success: false, message: "Adresse de livraison incomplète (rue et ville obligatoires)" });
+      }
+      if (!telephone) {
+        return res.status(400).json({ success: false, message: "Téléphone obligatoire" });
+      }
+      if (modePaiement && !["COD"].includes(modePaiement)) {
+        return res.status(400).json({ success: false, message: "Mode de paiement invalide (COD uniquement)" });
+      }
+
+      // ✅ Réutilise la même logique métier que /api/commandes (panier → commande,
+      // calcul du total serveur, décrément du stock, panier marqué "completed")
+      const commande = await commandeService.createCommande({
         clientId: userId,
-        nom: req.user.nom,
-        prenom: req.user.prenom || "",
-        email: req.user.email,
-        telephone: req.user.telephone || "",
-        adresse: adresse,
-      };
-
-      // TODO: Implémenter cartService.checkout()
-      const result = {
-        statusCode: 201,
-        data: { 
-          message: "Commande créée (TODO: implémenter checkout)",
-          orderId: `CMD_${Date.now()}`
-        }
-      };
-
-      res.status(result.statusCode).json({
-        success: true,
-        data: result.data,
+        nomClient: req.user.nom,
+        emailClient: req.user.email,
+        telephone,
+        adresseLivraison,
+        modePaiement: modePaiement || "COD",
+        montantTotal,
       });
+
+      res.status(201).json({ success: true, data: commande });
     } catch (error) {
       console.error("❌ Erreur checkout:", error);
       res.status(500).json({
         success: false,
-        message: "Erreur serveur",
+        message: error.message || "Erreur serveur",
       });
     }
   },

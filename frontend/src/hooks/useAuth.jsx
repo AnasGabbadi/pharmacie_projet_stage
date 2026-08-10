@@ -19,34 +19,63 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
+  // Stocke la session (token/role/user) et met à jour le contexte — utilisé
+  // aussi bien après un login que juste après une inscription réussie.
+  const persistSession = (token, role, user) => {
+    localStorage.setItem("token", token);
+    localStorage.setItem("role", role);
+    localStorage.setItem("user", JSON.stringify(user));
+
+    setUser(user);
+    setRole(role);
+    setIsAuthenticated(true);
+  };
+
   const login = async (email, motDePasse) => {
     try {
-      console.log("🔗 API CALL:", email);
       const response = await authApi.login({ email, motDePasse });
-      console.log("📥 RESPONSE:", response);
 
       if (response.success) {
-        // SAUVE TOUT
-        localStorage.setItem("token", response.data.token);
-        localStorage.setItem("role", response.role);
-        localStorage.setItem("user", JSON.stringify(response.data.utilisateur));
-        
-        setUser(response.data.utilisateur);
-        setRole(response.role);
-        setIsAuthenticated(true);
-        
-        console.log("💾 SAVED:", { token: response.data.token?.slice(0,20), role: response.role });
-        
+        // Le backend renvoie l'objet utilisateur sous une clé différente selon
+        // le rôle : "client" (clientService.login) ou "utilisateur" (admin/manager,
+        // via utilisateurService.login) — on lit celle qui est réellement présente.
+        const user = response.data.client || response.data.utilisateur;
+        persistSession(response.data.token, response.role, user);
+
         return {
           success: true,
           role: response.role,
           redirect: response.redirect || "/admin" // BACKEND PRIORITÉ
         };
       }
-      
+
       return { success: false, message: response.message || "Erreur login" };
     } catch (error) {
       console.error("💥 CATCH ERROR:", error);
+      return { success: false, message: error.message || "Erreur réseau" };
+    }
+  };
+
+  // Inscription (clients uniquement) — même mécanisme de session que login,
+  // pour connecter automatiquement l'utilisateur après un register réussi.
+  const register = async (formData) => {
+    try {
+      const response = await authApi.register(formData);
+
+      if (response.success) {
+        const role = response.data?.client?.role || "client";
+        persistSession(response.data.token, role, response.data.client);
+
+        return {
+          success: true,
+          role,
+          redirect: response.redirect || "/client/dashboard"
+        };
+      }
+
+      return { success: false, message: response.message || "Erreur lors de l'inscription" };
+    } catch (error) {
+      console.error("💥 REGISTER CATCH ERROR:", error);
       return { success: false, message: error.message || "Erreur réseau" };
     }
   };
@@ -78,8 +107,9 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     token,
     login,
+    register,
     logout,
-    refreshProfile, 
+    refreshProfile,
   };
 
   return (

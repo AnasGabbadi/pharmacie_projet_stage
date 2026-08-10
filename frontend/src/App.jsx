@@ -6,6 +6,7 @@ import HomePage from "./pages/public/HomePage";
 import "./resources/index.css";
 import RegisterPage from "./pages/public/RegisterPage";
 import CartPage from "./pages/public/CartPage";
+import ProduitPage from "./pages/public/ProduitPage";
 
 function PrivateAdminRoute({ children }) {
   const role = localStorage.getItem('role');
@@ -31,6 +32,7 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/panier" element={<CartPage />} />
+      <Route path="/produit/:id" element={<ProduitPage />} />
 
       {/* 👑 ADMIN PROTÉGÉ - CORRIGÉ ! */}
       <Route path="/admin/*" element={

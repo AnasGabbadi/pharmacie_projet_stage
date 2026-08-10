@@ -9,9 +9,10 @@ import {
   CircularProgress,
   Divider,
 } from "@mui/material";
-import authService from "../../api/auth";
+import { useAuth } from "../../hooks/useAuth";
 
 const RegisterPage = () => {
+  const { register } = useAuth();
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -57,14 +58,9 @@ const RegisterPage = () => {
     setError("");
 
     try {
-      console.log("📡 API REGISTER...");
-      
-      // ✅ CORRECTION : authService.register (PAS register seul)
-      const result = await authService.register(formData);
-      console.log("✅ RESULT:", result);
+      const result = await register(formData);
 
       if (result.success) {
-        console.log("🎉 REGISTER SUCCESS - REDIRECT:", result.redirect);
         window.location.href = result.redirect || "/client/dashboard";
         return;
       }

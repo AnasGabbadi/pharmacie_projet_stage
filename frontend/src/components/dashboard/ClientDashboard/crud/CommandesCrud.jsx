@@ -1,6 +1,5 @@
 // ══════════════════════════════════════════════════════════
 // src/components/dashboard/ClientDashboard/CommandesCrud.jsx
-// Version avec intégration Stripe
 // ══════════════════════════════════════════════════════════
 import { useEffect, useState } from "react";
 import {
@@ -12,14 +11,12 @@ import { DataGrid } from "@mui/x-data-grid";
 import {
   Visibility, ShoppingBag, Close,
   HourglassEmpty, CheckCircle, Inventory,
-  LocalShipping, Cancel, CreditCard,
+  LocalShipping, Cancel,
 } from "@mui/icons-material";
-import StripePaymentDialog from "../../../stripe/StripePaymentDialog";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
 const STATUT_CONFIG = {
-  en_attente_paiement: { label: "⏳ Paiement en attente", color: "error",   icon: <CreditCard sx={{ fontSize: 14 }} /> },
   en_attente:          { label: "En attente",             color: "warning", icon: <HourglassEmpty sx={{ fontSize: 14 }} /> },
   validee:             { label: "Validée",                color: "info",    icon: <CheckCircle sx={{ fontSize: 14 }} /> },
   preparee:            { label: "En prépa.",              color: "info",    icon: <Inventory sx={{ fontSize: 14 }} /> },
@@ -35,7 +32,6 @@ function CommandesCrud() {
   const [error,           setError]           = useState(null);
   const [successMsg,      setSuccessMsg]      = useState("");
   const [viewingCommande, setViewingCommande] = useState(null);
-  const [payingCommande,  setPayingCommande]  = useState(null); // commande à payer
 
   const showSuccess = (msg) => { setSuccessMsg(msg); setTimeout(() => setSuccessMsg(""), 4000); };
 
@@ -56,13 +52,6 @@ function CommandesCrud() {
   };
 
   useEffect(() => { fetchCommandes(); }, []);
-
-  // ── Après paiement réussi → refresh + notif ───────────────
-  const handlePaymentSuccess = async () => {
-    setPayingCommande(null);
-    showSuccess("🎉 Paiement réussi ! Votre commande est confirmée.");
-    await fetchCommandes(); // Le webhook a déjà mis à jour le statut
-  };
 
   const columns = [
     {
@@ -145,24 +134,6 @@ function CommandesCrud() {
             sx={{ color: "#3E5F44", backgroundColor: "rgba(62,95,68,0.1)", "&:hover": { backgroundColor: "rgba(62,95,68,0.2)" } }}>
             <Visibility fontSize="small" />
           </IconButton>
-
-          {/* ✅ Bouton PAYER — visible uniquement pour commandes carte en attente paiement */}
-          {p.row.statut === "en_attente_paiement" && p.row.modePaiement === "carte" && (
-            <Button
-              size="small"
-              variant="contained"
-              startIcon={<CreditCard sx={{ fontSize: 14 }} />}
-              onClick={(e) => { e.stopPropagation(); setPayingCommande(p.row); }}
-              sx={{
-                backgroundColor: "#e74c3c",
-                "&:hover": { backgroundColor: "#c0392b" },
-                textTransform: "none", fontSize: "0.75rem",
-                fontWeight: 700, borderRadius: 2, px: 1.5, py: 0.5,
-              }}
-            >
-              Payer
-            </Button>
-          )}
         </Stack>
       ),
     },
@@ -196,15 +167,6 @@ function CommandesCrud() {
         </Box>
       )}
 
-      {/* Bannière commandes en attente de paiement */}
-      {commandes.some((c) => c.statut === "en_attente_paiement") && (
-        <Box sx={{ px: 3, pb: 1 }}>
-          <Alert severity="warning" icon={<CreditCard />} sx={{ borderRadius: 2 }}>
-            <strong>Paiement requis</strong> — Vous avez {commandes.filter((c) => c.statut === "en_attente_paiement").length} commande(s) en attente de paiement.
-          </Alert>
-        </Box>
-      )}
-
       {/* DataGrid */}
       <Box sx={{ flexGrow: 1, px: { xs: 1, sm: 2 }, pb: 3, minHeight: 0 }}>
         {!loading && commandes.length === 0 && !error ? (
@@ -218,9 +180,6 @@ function CommandesCrud() {
             rows={commandes}
             getRowId={(row) => row._id}
             columns={columns}
-            getRowClassName={(p) =>
-              p.row.statut === "en_attente_paiement" ? "row-paiement-requis" : ""
-            }
             sx={{
               height: "100%", border: "none", borderRadius: 2,
               boxShadow: "0 4px 12px rgba(0,0,0,0.06)", backgroundColor: "white",
@@ -230,11 +189,6 @@ function CommandesCrud() {
               "& .MuiDataGrid-row": {
                 "&:hover": { backgroundColor: "#f8f9fa", cursor: "pointer" },
                 "&:nth-of-type(even)": { backgroundColor: "#fafafa" },
-              },
-              // Surligner les commandes à payer
-              "& .row-paiement-requis": {
-                backgroundColor: "#fff5f5 !important",
-                borderLeft: "3px solid #e74c3c",
               },
               "& .MuiDataGrid-footerContainer": { borderTop: "2px solid #e0e0e0", backgroundColor: "#f5f5f5" },
             }}
@@ -268,13 +222,6 @@ function CommandesCrud() {
         <DialogContent sx={{ p: 3 }}>
           {viewingCommande && (
             <Stack gap={2.5}>
-
-              {/* Bannière paiement requis */}
-              {viewingCommande.statut === "en_attente_paiement" && (
-                <Alert severity="error" icon={<CreditCard />} sx={{ borderRadius: 2 }}>
-                  <strong>Paiement requis</strong> — Cliquez sur "Payer maintenant" pour finaliser votre commande.
-                </Alert>
-              )}
 
               <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Box>
@@ -350,27 +297,8 @@ function CommandesCrud() {
           <Button onClick={() => setViewingCommande(null)} sx={{ textTransform: "none", color: "text.secondary" }}>
             Fermer
           </Button>
-          {/* Bouton Payer si en attente paiement */}
-          {viewingCommande?.statut === "en_attente_paiement" && (
-            <Button
-              variant="contained"
-              startIcon={<CreditCard />}
-              onClick={() => { setViewingCommande(null); setPayingCommande(viewingCommande); }}
-              sx={{ backgroundColor: "#e74c3c", "&:hover": { backgroundColor: "#c0392b" }, textTransform: "none", fontWeight: 700, borderRadius: 2, px: 3 }}
-            >
-              Payer maintenant
-            </Button>
-          )}
         </DialogActions>
       </Dialog>
-
-      {/* ── Dialog Stripe Paiement ── */}
-      <StripePaymentDialog
-        open={!!payingCommande}
-        commande={payingCommande}
-        onClose={() => setPayingCommande(null)}
-        onPaymentSuccess={handlePaymentSuccess}
-      />
     </Box>
   );
 }

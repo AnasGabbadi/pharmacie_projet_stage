@@ -11,6 +11,7 @@ import {
   Alert,
 } from "@mui/material";
 import { ShoppingCart, Check } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 import { useCart } from "../../hooks/useCart";
 
 function ProductCard({ product }) {
@@ -18,6 +19,11 @@ function ProductCard({ product }) {
   const [added, setAdded] = useState(false);
   const [error, setError] = useState(null);
   const { addItem } = useCart();
+  const navigate = useNavigate();
+
+  const goToProduct = () => {
+    navigate(`/produit/${product._id || product.id}`);
+  };
 
   const truncateTitle = (text, maxLength = 50) => {
     if (text.length > maxLength) {
@@ -87,7 +93,10 @@ function ProductCard({ product }) {
         },
       }}
     >
-      <Box sx={{ position: "relative", paddingTop: "100%", overflow: "hidden" }}>
+      <Box
+        onClick={goToProduct}
+        sx={{ position: "relative", paddingTop: "100%", overflow: "hidden", cursor: "pointer" }}
+      >
         {product.image ? (
           <CardMedia
             component="img"
@@ -173,26 +182,27 @@ function ProductCard({ product }) {
           p: 2,
         }}
       >
-        {/* Titre */}
-        {isLongTitle ? (
-          <Tooltip title={product.name || product.nom} arrow>
-            {titleComponent}
-          </Tooltip>
-        ) : (
-          titleComponent
-        )}
+        {/* Titre + Prix (cliquable vers la fiche produit) */}
+        <Box onClick={goToProduct} sx={{ cursor: "pointer" }}>
+          {isLongTitle ? (
+            <Tooltip title={product.name || product.nom} arrow>
+              {titleComponent}
+            </Tooltip>
+          ) : (
+            titleComponent
+          )}
 
-        {/* Prix */}
-        <Typography
-          variant="h5"
-          sx={{
-            color: "#3E5F44",
-            fontWeight: 700,
-            mb: 2,
-          }}
-        >
-          {(product.price || product.prix)?.toLocaleString()} DH
-        </Typography>
+          <Typography
+            variant="h5"
+            sx={{
+              color: "#3E5F44",
+              fontWeight: 700,
+              mb: 2,
+            }}
+          >
+            {(product.price || product.prix)?.toLocaleString()} DH
+          </Typography>
+        </Box>
 
         {/* Message d'erreur */}
         {error && (

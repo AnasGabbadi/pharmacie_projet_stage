@@ -3,15 +3,16 @@ import {
   Box, Container, Typography, Button, IconButton, Divider,
   TextField, CircularProgress, Alert, Snackbar, Paper, Stack,
   Chip, Dialog, DialogTitle, DialogContent, DialogActions,
-  RadioGroup, FormControlLabel, Radio, FormControl,
+  RadioGroup, FormControlLabel, Radio, FormControl, Checkbox,
 } from "@mui/material";
 import {
   Add, Remove, Delete, ShoppingBag, ArrowBack,
-  LocalShipping, Security, CheckCircle, CreditCard, LocalAtm,
+  LocalShipping, Security, CheckCircle,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../../hooks/useCart";
 import { useAuth } from "../../hooks/useAuth";
+import authService from "../../api/auth";
 
 function CartPage() {
   const navigate = useNavigate();
@@ -33,6 +34,13 @@ function CartPage() {
     modePaiement: "COD",
   });
   const [formErrors, setFormErrors] = useState({});
+
+  // ── Adresses enregistrées (sélecteur checkout) ────────────
+  const [adresses, setAdresses] = useState([]);
+  const [loadingAdresses, setLoadingAdresses] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState("new"); // "new" ou _id d'une adresse enregistrée
+  const [saveNewAddress, setSaveNewAddress] = useState(false);
+  const isNewAddressMode = adresses.length === 0 || selectedAddressId === "new";
 
   const items = cart?.items || [];
   const totalAmount = cart?.totalAmount || items.reduce((s, i) => s + (i.unitPrice || 0) * (i.quantity || 0), 0);
@@ -70,8 +78,31 @@ function CartPage() {
     else showSnackbar(result.message || "Erreur", "error");
   };
 
+  // ── Applique une adresse enregistrée aux champs du formulaire ──
+  const applyAddress = (adresse) => {
+    setForm((p) => ({
+      ...p,
+      rue: adresse.rue,
+      ville: adresse.ville,
+      codePostal: adresse.codePostal || "",
+      pays: adresse.pays || "Maroc",
+    }));
+    setFormErrors((p) => ({ ...p, rue: undefined, ville: undefined }));
+  };
+
+  const handleSelectAddress = (id) => {
+    setSelectedAddressId(id);
+    if (id === "new") {
+      setForm((p) => ({ ...p, rue: "", ville: "", codePostal: "", pays: "Maroc" }));
+      setFormErrors((p) => ({ ...p, rue: undefined, ville: undefined }));
+    } else {
+      const adresse = adresses.find((a) => a._id === id);
+      if (adresse) applyAddress(adresse);
+    }
+  };
+
   // ── Ouvrir checkout avec validations préalables ───────────
-  const handleOpenCheckout = () => {
+  const handleOpenCheckout = async () => {
     // 1. Panier non vide
     if (items.length === 0) {
       showSnackbar("Votre panier est vide", "error");
@@ -83,7 +114,31 @@ function CartPage() {
       navigate("/login");
       return;
     }
+
+    setSaveNewAddress(false);
+    setSelectedAddressId("new");
     setCheckoutOpen(true);
+
+    // 3. Charge les adresses enregistrées pour proposer le sélecteur —
+    // un échec ici ne doit jamais empêcher l'ouverture du checkout, le
+    // formulaire libre reste disponible dans tous les cas.
+    setLoadingAdresses(true);
+    try {
+      const res = await authService.getAdresses();
+      if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
+        setAdresses(res.data);
+        const principale = res.data.find((a) => a.estPrincipale) || res.data[0];
+        setSelectedAddressId(principale._id);
+        applyAddress(principale);
+      } else {
+        setAdresses([]);
+      }
+    } catch (err) {
+      console.error("Erreur chargement adresses:", err);
+      setAdresses([]);
+    } finally {
+      setLoadingAdresses(false);
+    }
   };
 
   // ── Validation formulaire checkout ────────────────────────
@@ -97,8 +152,6 @@ function CartPage() {
       errors.telephone = "Téléphone obligatoire";
     else if (!/^(\+212|0)[5-7][0-9]{8}$/.test(form.telephone.replace(/\s/g, "")))
       errors.telephone = "Format invalide (ex: 0661234567 ou +212661234567)";
-    if (!form.modePaiement)
-      errors.modePaiement = "Choisissez un mode de paiement";
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -120,13 +173,29 @@ function CartPage() {
     };
 
     const result = await checkout(payload);
-    setCheckoutLoading(false);
 
     if (result.success) {
+      // Sauvegarde optionnelle de la nouvelle adresse — best-effort, ne doit
+      // jamais faire échouer la commande déjà validée si elle échoue.
+      if (isNewAddressMode && saveNewAddress) {
+        try {
+          await authService.addAdresse({
+            rue: form.rue,
+            ville: form.ville,
+            codePostal: form.codePostal,
+            pays: form.pays,
+          });
+        } catch (err) {
+          console.error("Erreur sauvegarde adresse (non bloquant):", err);
+        }
+      }
+
+      setCheckoutLoading(false);
       setCheckoutOpen(false);
       showSnackbar("🎉 Commande passée avec succès !", "success");
       setTimeout(() => navigate("/client"), 2500);
     } else {
+      setCheckoutLoading(false);
       showSnackbar(result.message || "Erreur lors de la commande", "error");
     }
   };
@@ -277,15 +346,66 @@ function CartPage() {
         <DialogTitle sx={{ fontWeight: 700, pb: 0 }}>Finaliser la commande</DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
 
-          <Typography variant="subtitle2" fontWeight={700} color="#3E5F44" mb={1.5} mt={1}>📍 Adresse de livraison</Typography>
-          <Stack gap={2} mb={3}>
-            <TextField label="Rue / Adresse complète *" value={form.rue} onChange={(e) => setField("rue", e.target.value)} error={!!formErrors.rue} helperText={formErrors.rue} fullWidth placeholder="Ex: 12 Rue Mohammed V, Apt 3" sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }} />
-            <Stack direction="row" gap={2}>
-              <TextField label="Ville *" value={form.ville} onChange={(e) => setField("ville", e.target.value)} error={!!formErrors.ville} helperText={formErrors.ville} fullWidth placeholder="Ex: Casablanca" sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }} />
-              <TextField label="Code postal" value={form.codePostal} onChange={(e) => setField("codePostal", e.target.value)} fullWidth placeholder="Ex: 20000" sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }} />
-            </Stack>
-            <TextField label="Pays" value={form.pays} onChange={(e) => setField("pays", e.target.value)} fullWidth sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }} />
+          <Stack direction="row" alignItems="center" gap={1} mb={1.5} mt={1}>
+            <Typography variant="subtitle2" fontWeight={700} color="#3E5F44">📍 Adresse de livraison</Typography>
+            {loadingAdresses && <CircularProgress size={14} sx={{ color: "#3E5F44" }} />}
           </Stack>
+
+          {adresses.length > 0 && (
+            <FormControl component="fieldset" fullWidth sx={{ mb: 2 }}>
+              <RadioGroup value={selectedAddressId} onChange={(e) => handleSelectAddress(e.target.value)}>
+                {adresses.map((adresse) => (
+                  <Paper key={adresse._id} variant="outlined" onClick={() => handleSelectAddress(adresse._id)}
+                    sx={{ p: 2, mb: 1.5, borderRadius: 2, cursor: "pointer", border: selectedAddressId === adresse._id ? "2px solid #3E5F44" : "1px solid #e0e0e0", backgroundColor: selectedAddressId === adresse._id ? "#f0f7f1" : "white", transition: "all 0.2s" }}>
+                    <FormControlLabel value={adresse._id} control={<Radio sx={{ color: "#3E5F44", "&.Mui-checked": { color: "#3E5F44" } }} />}
+                      label={
+                        <Box>
+                          <Stack direction="row" alignItems="center" gap={1}>
+                            <Typography fontWeight={600} fontSize="0.95rem">{adresse.rue}</Typography>
+                            {adresse.estPrincipale && (
+                              <Chip label="Principale" size="small" sx={{ backgroundColor: "#e8f5e9", color: "#3E5F44", fontWeight: 700, height: 20 }} />
+                            )}
+                          </Stack>
+                          <Typography variant="caption" color="text.secondary">
+                            {adresse.ville}{adresse.codePostal ? `, ${adresse.codePostal}` : ""} — {adresse.pays}
+                          </Typography>
+                        </Box>
+                      }
+                      sx={{ m: 0, width: "100%", alignItems: "flex-start" }} />
+                  </Paper>
+                ))}
+                <Paper variant="outlined" onClick={() => handleSelectAddress("new")}
+                  sx={{ p: 2, borderRadius: 2, cursor: "pointer", border: selectedAddressId === "new" ? "2px solid #3E5F44" : "1px solid #e0e0e0", backgroundColor: selectedAddressId === "new" ? "#f0f7f1" : "white", transition: "all 0.2s" }}>
+                  <FormControlLabel value="new" control={<Radio sx={{ color: "#3E5F44", "&.Mui-checked": { color: "#3E5F44" } }} />}
+                    label={<Typography fontWeight={600} fontSize="0.95rem">+ Saisir une nouvelle adresse</Typography>}
+                    sx={{ m: 0, width: "100%" }} />
+                </Paper>
+              </RadioGroup>
+            </FormControl>
+          )}
+
+          <Stack gap={2} mb={isNewAddressMode ? 1 : 3}>
+            <TextField label="Rue / Adresse complète *" value={form.rue} onChange={(e) => setField("rue", e.target.value)} error={!!formErrors.rue} helperText={formErrors.rue} disabled={!isNewAddressMode} fullWidth placeholder="Ex: 12 Rue Mohammed V, Apt 3" sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }} />
+            <Stack direction="row" gap={2}>
+              <TextField label="Ville *" value={form.ville} onChange={(e) => setField("ville", e.target.value)} error={!!formErrors.ville} helperText={formErrors.ville} disabled={!isNewAddressMode} fullWidth placeholder="Ex: Casablanca" sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }} />
+              <TextField label="Code postal" value={form.codePostal} onChange={(e) => setField("codePostal", e.target.value)} disabled={!isNewAddressMode} fullWidth placeholder="Ex: 20000" sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }} />
+            </Stack>
+            <TextField label="Pays" value={form.pays} onChange={(e) => setField("pays", e.target.value)} disabled={!isNewAddressMode} fullWidth sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }} />
+          </Stack>
+
+          {isNewAddressMode && (
+            <FormControlLabel
+              sx={{ mb: 2 }}
+              control={
+                <Checkbox
+                  checked={saveNewAddress}
+                  onChange={(e) => setSaveNewAddress(e.target.checked)}
+                  sx={{ color: "#3E5F44", "&.Mui-checked": { color: "#3E5F44" } }}
+                />
+              }
+              label="Enregistrer cette adresse pour la prochaine fois"
+            />
+          )}
 
           <Typography variant="subtitle2" fontWeight={700} color="#3E5F44" mb={1.5}>📞 Contact</Typography>
           <TextField
@@ -298,24 +418,6 @@ function CartPage() {
             placeholder="Ex: 0661234567"
             sx={{ mb: 3, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
           />
-
-          <Typography variant="subtitle2" fontWeight={700} color="#3E5F44" mb={1.5}>💳 Mode de paiement</Typography>
-          <FormControl component="fieldset" fullWidth>
-            <RadioGroup value={form.modePaiement} onChange={(e) => setField("modePaiement", e.target.value)}>
-              <Paper variant="outlined" onClick={() => setField("modePaiement", "COD")}
-                sx={{ p: 2, mb: 1.5, borderRadius: 2, cursor: "pointer", border: form.modePaiement === "COD" ? "2px solid #3E5F44" : "1px solid #e0e0e0", backgroundColor: form.modePaiement === "COD" ? "#f0f7f1" : "white", transition: "all 0.2s" }}>
-                <FormControlLabel value="COD" control={<Radio sx={{ color: "#3E5F44", "&.Mui-checked": { color: "#3E5F44" } }} />}
-                  label={<Stack direction="row" alignItems="center" gap={1.5}><LocalAtm sx={{ color: "#3E5F44", fontSize: 28 }} /><Box><Typography fontWeight={600} fontSize="0.95rem">Paiement à la livraison</Typography><Typography variant="caption" color="text.secondary">Payez en espèces à la réception</Typography></Box></Stack>}
-                  sx={{ m: 0, width: "100%" }} />
-              </Paper>
-              <Paper variant="outlined" onClick={() => setField("modePaiement", "carte")}
-                sx={{ p: 2, borderRadius: 2, cursor: "pointer", border: form.modePaiement === "carte" ? "2px solid #3E5F44" : "1px solid #e0e0e0", backgroundColor: form.modePaiement === "carte" ? "#f0f7f1" : "white", transition: "all 0.2s" }}>
-                <FormControlLabel value="carte" control={<Radio sx={{ color: "#3E5F44", "&.Mui-checked": { color: "#3E5F44" } }} />}
-                  label={<Stack direction="row" alignItems="center" gap={1.5}><CreditCard sx={{ color: "#3E5F44", fontSize: 28 }} /><Box><Typography fontWeight={600} fontSize="0.95rem">Paiement par carte</Typography><Typography variant="caption" color="text.secondary">Visa, Mastercard — paiement sécurisé</Typography></Box></Stack>}
-                  sx={{ m: 0, width: "100%" }} />
-              </Paper>
-            </RadioGroup>
-          </FormControl>
 
           {/* Récap */}
           <Box sx={{ mt: 3, p: 2, backgroundColor: "#f8f9fa", borderRadius: 2, border: "1px solid #e8e8e8" }}>

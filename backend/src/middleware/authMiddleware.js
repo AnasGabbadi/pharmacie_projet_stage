@@ -25,7 +25,7 @@ const authMiddleware = async (req, res, next) => {
 
     let payload;
     try {
-      payload = jwt.verify(token, process.env.JWT_SECRET || "ParaVital2026_super_secret_key");
+      payload = jwt.verify(token, process.env.JWT_SECRET);
     } catch (err) {
       return res.status(401).json({ 
         success: false, 

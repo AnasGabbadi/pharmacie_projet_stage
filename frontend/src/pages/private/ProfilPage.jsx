@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import {
   Box, Stack, Typography, TextField, Button, Paper, Alert,
-  Avatar, Divider, CircularProgress, Chip,
+  Avatar, Divider, CircularProgress, Chip, Dialog, DialogTitle,
+  DialogContent, DialogActions, Checkbox, FormControlLabel, IconButton,
 } from "@mui/material";
-import { Person, Lock, Email, Badge, Phone } from "@mui/icons-material";
+import { Person, Lock, Email, Badge, Phone, LocationOn, Add, Edit, Delete, Star } from "@mui/icons-material";
 import authService from "../../api/auth";
 
 function ProfilPage() {
@@ -25,6 +26,20 @@ function ProfilPage() {
   });
   const [pwErrors,         setPwErrors]         = useState({});
   const [loadingPassword,  setLoadingPassword]  = useState(false);
+
+  // ── Adresses ──────────────────────────────────────────────
+  const [adresses,        setAdresses]        = useState([]);
+  const [loadingAdresses, setLoadingAdresses] = useState(true);
+
+  const [addressDialogOpen, setAddressDialogOpen] = useState(false);
+  const [editingAddress,    setEditingAddress]    = useState(null); // null = ajout, objet = édition
+  const [addressForm, setAddressForm] = useState({
+    rue: "", ville: "", codePostal: "", pays: "Maroc", estPrincipale: false,
+  });
+  const [addressFormErrors, setAddressFormErrors] = useState({});
+  const [addressDialogError, setAddressDialogError] = useState("");
+  const [savingAddress,     setSavingAddress]     = useState(false);
+  const [deletingAddressId, setDeletingAddressId] = useState(null);
 
   // ── Alertes ───────────────────────────────────────────────
   const [successMessage, setSuccessMessage] = useState("");
@@ -70,6 +85,123 @@ function ProfilPage() {
 
     fetchProfil();
   }, []);
+
+  // ── Fetch adresses via GET /api/auth/me/adresses (client uniquement) ──
+  const fetchAdresses = async () => {
+    setLoadingAdresses(true);
+    try {
+      const res = await authService.getAdresses();
+      if (res?.success) {
+        setAdresses(res.data || []);
+      } else {
+        showError(res?.message || "Erreur lors du chargement des adresses");
+      }
+    } catch (err) {
+      showError(err.message || "Erreur lors du chargement des adresses");
+    } finally {
+      setLoadingAdresses(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isClient) fetchAdresses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Dialog adresse : ouverture / fermeture ────────────────
+  const openAddDialog = () => {
+    setEditingAddress(null);
+    setAddressForm({ rue: "", ville: "", codePostal: "", pays: "Maroc", estPrincipale: false });
+    setAddressFormErrors({});
+    setAddressDialogError("");
+    setAddressDialogOpen(true);
+  };
+
+  const openEditDialog = (adresse) => {
+    setEditingAddress(adresse);
+    setAddressForm({
+      rue: adresse.rue || "",
+      ville: adresse.ville || "",
+      codePostal: adresse.codePostal || "",
+      pays: adresse.pays || "Maroc",
+      estPrincipale: !!adresse.estPrincipale,
+    });
+    setAddressFormErrors({});
+    setAddressDialogError("");
+    setAddressDialogOpen(true);
+  };
+
+  const closeAddressDialog = () => {
+    if (savingAddress) return;
+    setAddressDialogOpen(false);
+  };
+
+  const setAddressField = (field, value) => {
+    setAddressForm((p) => ({ ...p, [field]: value }));
+    setAddressFormErrors((p) => ({ ...p, [field]: undefined }));
+  };
+
+  const validateAddressForm = () => {
+    const e = {};
+    if (!addressForm.rue.trim()) e.rue = "Rue obligatoire";
+    if (!addressForm.ville.trim()) e.ville = "Ville obligatoire";
+    setAddressFormErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSaveAddress = async () => {
+    if (!validateAddressForm()) return;
+    setSavingAddress(true);
+    setAddressDialogError("");
+
+    try {
+      const payload = {
+        rue: addressForm.rue.trim(),
+        ville: addressForm.ville.trim(),
+        codePostal: addressForm.codePostal.trim(),
+        pays: addressForm.pays.trim() || "Maroc",
+        estPrincipale: addressForm.estPrincipale,
+      };
+
+      const res = editingAddress
+        ? await authService.updateAdresse(editingAddress._id, payload)
+        : await authService.addAdresse(payload);
+
+      if (res?.success) {
+        setAdresses(res.data || []);
+        setAddressDialogOpen(false);
+        showSuccess(editingAddress ? "Adresse modifiée avec succès" : "Adresse ajoutée avec succès");
+      } else {
+        setAddressDialogError(res?.message || "Erreur lors de l'enregistrement de l'adresse");
+      }
+    } catch (err) {
+      setAddressDialogError(err.message || "Erreur lors de l'enregistrement de l'adresse");
+    } finally {
+      setSavingAddress(false);
+    }
+  };
+
+  const handleDeleteAddress = async (adresse) => {
+    const confirmed = window.confirm(
+      `Supprimer l'adresse "${adresse.rue}, ${adresse.ville}" ?`
+    );
+    if (!confirmed) return;
+
+    setDeletingAddressId(adresse._id);
+    try {
+      const res = await authService.deleteAdresse(adresse._id);
+      if (res?.success) {
+        setAdresses(res.data || []);
+        showSuccess("Adresse supprimée avec succès");
+      } else {
+        showError(res?.message || "Erreur lors de la suppression de l'adresse");
+      }
+    } catch (err) {
+      showError(err.message || "Erreur lors de la suppression de l'adresse");
+    } finally {
+      setDeletingAddressId(null);
+    }
+  };
 
   // ── Validation infos ──────────────────────────────────────
   const validateInfo = () => {
@@ -346,6 +478,92 @@ function ProfilPage() {
           </Stack>
         </Paper>
 
+        {/* ── Mes adresses (client uniquement) ── */}
+        {isClient && (
+          <Paper elevation={2} sx={{ p: 4, borderRadius: 3, backgroundColor: "#fff" }}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" spacing={2} mb={3}>
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Avatar sx={{ width: 50, height: 50, bgcolor: "#3E5F44" }}><LocationOn /></Avatar>
+                <Box>
+                  <Typography variant="h6" fontWeight={600}>Mes adresses</Typography>
+                  <Typography variant="body2" color="text.secondary">Gérez vos adresses de livraison</Typography>
+                </Box>
+              </Stack>
+              <Button
+                variant="outlined"
+                startIcon={<Add />}
+                onClick={openAddDialog}
+                sx={{
+                  borderColor: "#3E5F44", color: "#3E5F44", textTransform: "none", borderRadius: 2,
+                  "&:hover": { borderColor: "#2f4734", backgroundColor: "#f0f7f1" },
+                }}
+              >
+                Ajouter une adresse
+              </Button>
+            </Stack>
+            <Divider sx={{ mb: 3 }} />
+
+            {loadingAdresses ? (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+                <CircularProgress size={28} sx={{ color: "#3E5F44" }} />
+              </Box>
+            ) : adresses.length === 0 ? (
+              <Typography color="text.secondary" sx={{ py: 1 }}>
+                Aucune adresse enregistrée pour le moment.
+              </Typography>
+            ) : (
+              <Stack spacing={2}>
+                {adresses.map((adresse) => (
+                  <Paper
+                    key={adresse._id}
+                    variant="outlined"
+                    sx={{
+                      p: 2.5, borderRadius: 2,
+                      borderColor: adresse.estPrincipale ? "#3E5F44" : "#e0e0e0",
+                      borderWidth: adresse.estPrincipale ? 2 : 1,
+                    }}
+                  >
+                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap" gap={1}>
+                      <Box>
+                        <Stack direction="row" alignItems="center" spacing={1} mb={0.5} flexWrap="wrap">
+                          <Typography fontWeight={600}>{adresse.rue}</Typography>
+                          {adresse.estPrincipale && (
+                            <Chip
+                              icon={<Star sx={{ fontSize: 16 }} />}
+                              label="Principale"
+                              size="small"
+                              sx={{ backgroundColor: "#e8f5e9", color: "#3E5F44", fontWeight: 700 }}
+                            />
+                          )}
+                        </Stack>
+                        <Typography variant="body2" color="text.secondary">
+                          {adresse.ville}{adresse.codePostal ? `, ${adresse.codePostal}` : ""} — {adresse.pays}
+                        </Typography>
+                      </Box>
+                      <Stack direction="row" spacing={1}>
+                        <IconButton size="small" onClick={() => openEditDialog(adresse)} sx={{ color: "#3E5F44" }}>
+                          <Edit fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleDeleteAddress(adresse)}
+                          disabled={deletingAddressId === adresse._id}
+                          sx={{ color: "#e74c3c", "&:hover": { backgroundColor: "#fdecea" } }}
+                        >
+                          {deletingAddressId === adresse._id
+                            ? <CircularProgress size={18} color="error" />
+                            : <Delete fontSize="small" />
+                          }
+                        </IconButton>
+                      </Stack>
+                    </Stack>
+                  </Paper>
+                ))}
+              </Stack>
+            )}
+          </Paper>
+        )}
+
         {/* ── Sécurité / Mot de passe ── */}
         <Paper elevation={2} sx={{ p: 4, borderRadius: 3, backgroundColor: "#fff" }}>
           <Stack direction="row" alignItems="center" spacing={2} mb={3}>
@@ -392,6 +610,89 @@ function ProfilPage() {
         </Paper>
 
       </Stack>
+
+      {/* ── Dialog Ajouter / Modifier une adresse ── */}
+      <Dialog
+        open={addressDialogOpen}
+        onClose={closeAddressDialog}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          {editingAddress ? "Modifier l'adresse" : "Ajouter une adresse"}
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          {addressDialogError && (
+            <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{addressDialogError}</Alert>
+          )}
+          <Stack gap={2} mt={1}>
+            <TextField
+              label="Rue / Adresse complète *"
+              value={addressForm.rue}
+              onChange={(e) => setAddressField("rue", e.target.value)}
+              error={!!addressFormErrors.rue}
+              helperText={addressFormErrors.rue}
+              fullWidth
+              placeholder="Ex: 12 Rue Mohammed V, Apt 3"
+              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+            />
+            <Stack direction="row" gap={2}>
+              <TextField
+                label="Ville *"
+                value={addressForm.ville}
+                onChange={(e) => setAddressField("ville", e.target.value)}
+                error={!!addressFormErrors.ville}
+                helperText={addressFormErrors.ville}
+                fullWidth
+                placeholder="Ex: Casablanca"
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+              />
+              <TextField
+                label="Code postal"
+                value={addressForm.codePostal}
+                onChange={(e) => setAddressField("codePostal", e.target.value)}
+                fullWidth
+                placeholder="Ex: 20000"
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+              />
+            </Stack>
+            <TextField
+              label="Pays"
+              value={addressForm.pays}
+              onChange={(e) => setAddressField("pays", e.target.value)}
+              fullWidth
+              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={addressForm.estPrincipale}
+                  onChange={(e) => setAddressField("estPrincipale", e.target.checked)}
+                  sx={{ color: "#3E5F44", "&.Mui-checked": { color: "#3E5F44" } }}
+                />
+              }
+              label="Définir comme adresse principale"
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, pt: 1 }}>
+          <Button onClick={closeAddressDialog} disabled={savingAddress} sx={{ color: "text.secondary", textTransform: "none" }}>
+            Annuler
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveAddress}
+            disabled={savingAddress}
+            sx={{ backgroundColor: "#3E5F44", "&:hover": { backgroundColor: "#2f4734" }, textTransform: "none", borderRadius: 2, minWidth: 100 }}
+          >
+            {savingAddress
+              ? <CircularProgress size={22} sx={{ color: "white" }} />
+              : (editingAddress ? "Enregistrer" : "Ajouter")
+            }
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

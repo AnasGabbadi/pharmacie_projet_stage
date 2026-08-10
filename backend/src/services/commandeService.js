@@ -1,6 +1,7 @@
 import Commande from "../models/Commande.model.js";
 import Cart from "../models/cartModel.js";
 import Produit from "../models/Produit.model.js";
+import emailService from "./emailService.js";
 
 const commandeService = {
 
@@ -42,7 +43,7 @@ const commandeService = {
       adresseLivraison,
       lignes,
       montantTotal: montantFinal,
-      modePaiement: modePaiement || "COD",
+      modePaiement: "COD",
       statut: "en_attente",
     });
 
@@ -58,6 +59,14 @@ const commandeService = {
     // 6. Marquer le panier comme "completed"
     cart.status = "completed";
     await cart.save();
+
+    // 7. Email d'accusé de réception — best-effort, ne doit jamais faire
+    // échouer la commande déjà créée si l'envoi rate (SMTP down, etc.).
+    try {
+      await emailService.envoyerAccuseReception(commande);
+    } catch (err) {
+      console.error("Erreur envoi email accusé de réception (non bloquant):", err.message);
+    }
 
     return commande;
   },
@@ -85,7 +94,24 @@ const commandeService = {
     if (!statutsValides.includes(statut)) {
       throw new Error(`Statut invalide: ${statut}`);
     }
-    return Commande.findByIdAndUpdate(id, { statut }, { new: true });
+
+    // COD étant le seul flux de paiement, c'est ici (validation manuelle admin)
+    // que datePaiement doit être renseigné — il ne reçoit plus jamais de valeur
+    // via un webhook.
+    const updateData = statut === "validee" ? { statut, datePaiement: new Date() } : { statut };
+    const commande = await Commande.findByIdAndUpdate(id, updateData, { new: true });
+
+    // Email de confirmation — uniquement lors du passage à "validee" (flux
+    // admin manuel, notamment paiement à la livraison). Best-effort.
+    if (commande && statut === "validee") {
+      try {
+        await emailService.envoyerConfirmationPaiement(commande);
+      } catch (err) {
+        console.error("Erreur envoi email confirmation validation (non bloquant):", err.message);
+      }
+    }
+
+    return commande;
   },
 };
 

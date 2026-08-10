@@ -71,8 +71,6 @@ export const useCart = () => {
       throw new Error("❌ ID produit manquant");
     }
 
-    console.log("🛒 Ajout:", { productId, quantity, token: token?.substring(0,20)+"..", guestId });
-
     try {
       // ✅ DIRECT fetch avec X-Guest-Id (ignore cartApi)
       const headers = {

@@ -19,6 +19,6 @@ router.put("/items/:productId", optionalAuth, cartController.updateItem);
 router.delete("/items/:productId", optionalAuth, cartController.deleteItem);
 router.delete("/", optionalAuth, cartController.clearCart);
 
-router.post("/checkout", requireRole(['client']), cartController.checkout);
+router.post("/checkout", authMiddleware, requireRole(['client']), cartController.checkout);
 
 export default router;

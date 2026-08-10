@@ -27,7 +27,41 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage });
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp"];
+
+const fileFilter = (req, file, cb) => {
+  const extOk = ALLOWED_EXTENSIONS.includes(path.extname(file.originalname).toLowerCase());
+  const mimeOk = ALLOWED_MIME_TYPES.includes(file.mimetype);
+
+  if (extOk && mimeOk) {
+    cb(null, true);
+  } else {
+    cb(new Error("Format de fichier non autorisé. Formats acceptés : JPEG, PNG, WEBP."));
+  }
+};
+
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 Mo
+});
+
+// Enveloppe upload.single("image") pour renvoyer une erreur JSON propre
+// (fichier rejeté par fileFilter, taille dépassée) au lieu de laisser
+// planter la requête sans réponse claire.
+const uploadImage = (req, res, next) => {
+  upload.single("image")(req, res, (err) => {
+    if (err) {
+      const message =
+        err.code === "LIMIT_FILE_SIZE"
+          ? "Fichier trop volumineux (taille maximale : 5 Mo)."
+          : err.message || "Erreur lors de l'upload du fichier.";
+      return res.status(400).json({ success: false, message });
+    }
+    next();
+  });
+};
 
 // ---------- ROUTES PUBLICATIONS PRODUIT ----------
 
@@ -40,7 +74,7 @@ router.post(
   "/",
   authMiddleware,
   requireRole(['admin']),
-  upload.single("image"),          // 🔹 parse FormData + image
+  uploadImage,          // 🔹 parse FormData + image
   async (req, res, next) => {
     try {
       // on mappe les champs attendus par ton modèle
@@ -77,7 +111,7 @@ router.put(
   "/:id",
   authMiddleware,
   requireRole(['admin']),
-  upload.single("image"),
+  uploadImage,
   async (req, res, next) => {
     try {
       const { nom, description, prix, stock, categorieId, actif } = req.body;
